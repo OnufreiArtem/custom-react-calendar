@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import styled, {keyframes} from "styled-components";
 
-import {InCell, OutCell, SelectedInCell, SelectedOutCell, WeekDayCell} from "./StyledCells";
+import {InCell, OutCell, SelectedInCell, SelectedOutCell, WeekDayCell, RangeInCell, RangeOutCell} from "./StyledCells";
 
 function Calendar({ date, type }) {
     const NUMBER_OF_ROWS = 6;
@@ -12,11 +12,13 @@ function Calendar({ date, type }) {
     const [pointer, setPointer] = useState(new Date(date.getTime()));
 
     const [selectedDate, setSelectedDate] = useState(undefined);
+    
     const [selectedRangePair, setRangePair] = useState({ 
         first: undefined,
         last: undefined
     })
-    const [selectedRange, setSelectedRanges] = useState([]) 
+    const [selectedRanges, setSelectedRanges] = useState([]) 
+    const [selectedRangesIndex, setSelectedRangesIndex] = useState(0)
 
     const monthNames = [
         "January",
@@ -75,11 +77,13 @@ function Calendar({ date, type }) {
     `;
 
     const Selection = styled.span`
+        display: inline-block;
         margin: 5px;
         border-radius: 999px;
         background-color: #ccc;
         font-size: 0.7rem;
         padding: 5px 10px;
+        transition: .3s all;
     `
 
     const Divider = styled.hr`
@@ -88,7 +92,9 @@ function Calendar({ date, type }) {
         border-radius: 5px;
     `
 
-    const SelectionControl = styled.div``;
+    const SelectionControl = styled.div`
+        padding: 1rem;
+    `;
 
     const CalendarFooter = styled.div``;
 
@@ -109,8 +115,7 @@ function Calendar({ date, type }) {
     }
 
     const dateRangeFormat = (pair) => {
-        if(!pair.first || !pair.second) return;
-        return `${pair.first.getDate()}-${pair.first.getMonth()}-${pair.first.getFullYear()} - ${pair.second.getDate()}-${pair.second.getMonth()}-${pair.second.getFullYear()}`;
+        return `${pair.first !== undefined ? dateFormat(pair.first) : "_"} - ${pair.last !== undefined ? dateFormat(pair.last) : "_"}`;
     }
 
     const ydmEquals = (date1, date2) => {
@@ -134,17 +139,39 @@ function Calendar({ date, type }) {
     };
 
     const onDayClick = (date) => {
-        if(type === "single") {
-            setSelectedDate(date);
+        setSelectedDate(date);
+    };
 
-        } else if (type === "range") {
-            let obj = Object.assign(selectedRangePair);
-            if(obj.first === undefined) obj.first = date;
-            else obj.last = date;
-            setRangePair(obj)
-            console.log(selectedRangePair)
-        } 
-        
+    const setStart = (date) => {
+        let obj = {
+            first: selectedRangePair.first,
+            last: selectedRangePair.last,
+        };
+
+        obj.first = date;
+        if(obj.last !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
+        setRangePair(obj)
+    }
+
+    const setEnd = (date) => {
+        let obj = {
+            first: selectedRangePair.first,
+            last: selectedRangePair.last,
+        };
+
+        obj.last = date;
+        if(obj.first !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
+        setRangePair(obj)
+    }
+
+    const onRangeDayClick = (date, e) => {
+        if(e === undefined || ydmEquals(date, selectedRangePair.first) || ydmEquals(date, selectedRangePair.last)) return;
+
+        if(e.shiftKey) {
+            setEnd(date);
+        } else {
+            setStart(date)
+        }
     };
 
     return (
@@ -166,7 +193,7 @@ function Calendar({ date, type }) {
                 ))}
 
                 {
-                    getAllDates(pointer).map((day, index) => {
+                    getAllDates(pointer).map((day) => {
 
                         if(type === "single") {
                             if(day.getMonth() === pointer.getMonth()) {          
@@ -180,13 +207,54 @@ function Calendar({ date, type }) {
                         }
 
                         if(type === "range") {
-                            if(day.getMonth() === pointer.getMonth()) {          
-                                return ydmEquals(day, selectedDate) ? <SelectedInCell onClick={() => onDayClick(new Date(0))}>{day.getDate()}</SelectedInCell>
-                                    : <InCell onClick={() => onDayClick(day)}>{day.getDate()}</InCell>;
+                            if(day.getMonth() === pointer.getMonth()) {      
+                                
+                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
+                                    return <SelectedInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</SelectedInCell>
+                                } else {
+                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
+                                        return <RangeInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</RangeInCell>;
+                                    } else {
+                                        return <InCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</InCell>;
+                                    }
+                                }
                             } 
                             else {
-                                return ydmEquals(day, selectedDate) ? <SelectedOutCell>{day.getDate()}</SelectedOutCell>
-                                : <OutCell>{day.getDate()}</OutCell> 
+                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
+                                    return <SelectedOutCell>{day.getDate()}</SelectedOutCell>
+                                } else {
+                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
+                                        return <RangeOutCell>{day.getDate()}</RangeOutCell>;
+                                    } else {
+                                        return <OutCell>{day.getDate()}</OutCell>;
+                                    }
+                                }
+                            }
+                        }
+
+                        if(type === "multiRange") {
+                            if(day.getMonth() === pointer.getMonth()) {      
+                                
+                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
+                                    return <SelectedInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</SelectedInCell>
+                                } else {
+                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
+                                        return <RangeInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</RangeInCell>;
+                                    } else {
+                                        return <InCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</InCell>;
+                                    }
+                                }
+                            } 
+                            else {
+                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
+                                    return <SelectedOutCell>{day.getDate()}</SelectedOutCell>
+                                } else {
+                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
+                                        return <RangeOutCell>{day.getDate()}</RangeOutCell>;
+                                    } else {
+                                        return <OutCell>{day.getDate()}</OutCell>;
+                                    }
+                                }
                             }
                         }
                          
@@ -199,12 +267,10 @@ function Calendar({ date, type }) {
             <Divider />
             <SelectionControl>
                 {
-                    <Selection>{dateFormat(selectedDate)}</Selection>
-                    
-                }
-
-                {
-                    <Selection>{dateRangeFormat(selectedRangePair)}</Selection>
+                    (() => {
+                        if(type==="single") return <Selection>{dateFormat(selectedDate)}</Selection>
+                        else if(type==="range") return <Selection>{dateRangeFormat(selectedRangePair)}</Selection>
+                    })()
                 }
                 
             </SelectionControl>

@@ -1,5 +1,15 @@
 import styled, {keyframes} from "styled-components";
 
+export const popup = keyframes`
+  from {
+    transform: scale(0.8)
+  }
+
+  to {
+    transform: scale(1);
+  }
+`;
+
 export const WeekDayCell = styled.span`
     margin-bottom: 20px;
 `;
@@ -15,6 +25,7 @@ export const BasicCell = styled.span`
     border-radius: 999px;
     color: #40394a;
     background-color: transparent;
+    user-select: none;
 `;
 
 export const InCell = styled(BasicCell)`
@@ -29,16 +40,33 @@ export const OutCell = styled(BasicCell)`
     color: #ccc;
 `;
 
-export const popup = keyframes`
-  from {
-    transform: scale(0.8)
-  }
+/*
+    position: relative;
+    
+    &::before {
+        content: '';
+        display: block;
+        width: 8px;
+        height: 4px;
+        position: absolute;
+        border-radius: 999px;
+        top: 80%;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #a3bad9;
+        animation: ${popup} .15s linear;
+    }
+*/
 
-  to {
-    transform: scale(1);
-  }
-`;
+export const RangeInCell = styled(InCell)` 
+    
+    color: blue;
 
+`
+
+export const RangeOutCell = styled(OutCell)`
+    background-color: #a3bad6;
+`
 
 export const SelectedInCell = styled(InCell)`
     color: red;

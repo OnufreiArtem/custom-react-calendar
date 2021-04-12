@@ -35,7 +35,7 @@ function App() {
 
   return (
     <AppContainer>
-      <Calendar id="calendar1" shown={true} type="range" date={new Date()}/>
+      <Calendar id="calendar1" shown={true} type="multiRange" date={new Date()}/>
       
     </AppContainer>
   );
