@@ -33,17 +33,6 @@ function App() {
     }
   `;
 
-  const DateInput = styled.a`
-    
-  `
-
-  const CalendarLabel = styled.p`
-    display: inline-block;
-    background-color: blue;
-  `
-  
-
-
   return (
     <AppContainer>
       <Calendar id="calendar1" shown={true} date={new Date()}/>
