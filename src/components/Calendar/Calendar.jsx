@@ -3,12 +3,16 @@ import React, {useState} from "react";
 import PropTypes from 'prop-types';
 import styled from "styled-components";
 
+import DayCell from "./DayCell"
+
 function Calendar({date}) {
 
     const NUMBER_OF_ROWS = 6;
 
     const [current, setCurrent] = useState(new Date(date.getTime()));
     const [pointer, setPointer] = useState(new Date(date.getTime()));
+
+    const [selectedDate, setSelectedDate] = useState(undefined);
 
     const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -19,6 +23,7 @@ function Calendar({date}) {
     const CalendarContainer = styled.div`
         box-shadow: 0 0 10px #0005;
         padding: 2rem 1rem;
+        border-radius: 5px;
     `
 
     const CalendarHeader = styled.div`
@@ -55,8 +60,9 @@ function Calendar({date}) {
     `
 
     const WeekDayCell = styled.span`
+        margin-bottom: 20px;
     `
-
+/*
     const DateCell = styled.span`
         display: flex;
         justify-content: center;
@@ -67,6 +73,12 @@ function Calendar({date}) {
         transition: .3s all;
         color: ${props => props.out ? "#ccc" : "#40394a"};
         cursor: pointer;
+
+        ${
+            props => {
+                if(props.selected) return `background-color: red`;
+            }
+        }
         
         ${
             props => {
@@ -79,7 +91,7 @@ function Calendar({date}) {
         }
 
     `
-
+*/
     const SelectionControl = styled.div`
     
     `
@@ -88,34 +100,22 @@ function Calendar({date}) {
     
     `
 
-    const getBeforeDates = (date) => {
+    const getAllDates = (date) => {
         let mDate = new Date(date.getTime());
         mDate.setDate(0);
         let daysBefore = mDate.getDay();
         mDate.setDate(mDate.getDate() - daysBefore);
-        return new Array(daysBefore).fill(0).map((_, index) => {
+        return new Array(7*NUMBER_OF_ROWS).fill(0).map( () => {
             mDate.setDate(mDate.getDate() + 1);
-            return mDate.getDate();
-        })
+            return new Date(mDate.getTime());
+        });
     }
 
-    const getMonthDates = (date) => {
-        console.log(new Date(date.getFullYear(), date.getMonth() + 2, 0))
-        return new Array(new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()).fill(0).map((_, index) => {
-            return index + 1;
-        })
+    const ydmEquals = (date1, date2) => {
+        return date1.getDate() === date2.getDate() &&
+         date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() == date2.getMonth();
     }
-
-
-    const getAfterDates = (date) => {   
-        console.log(date)
-        console.log(getBeforeDates(date).length) 
-        
-        return new Array(7*NUMBER_OF_ROWS - getBeforeDates(date).length - getMonthDates(date).length).fill(0).map((_, index) => {
-            return index + 1;
-        })
-    }
-
 
     const movePointerLeft = _ => {
         let tempDate = new Date(pointer.getTime());
@@ -130,6 +130,21 @@ function Calendar({date}) {
         
     } 
 
+    const onDayClick = date => {
+        setSelectedDate(date);
+    }
+
+    /*
+    {
+                    getAllDates(pointer).map((day) => {
+                        let result = undefined;
+                        if(day.getMonth() !== pointer.getMonth()) result = <DateCell out key={`out_${day.getDate()}`}>{day.getDate()}</DateCell>
+                        else result = <DateCell key={`in_${day.getDate()}`} onClick={() => onDayClick(day) }>{day.getDate()}</DateCell>
+                        return result;
+                    })
+                }
+    */
+
     return (
        <CalendarContainer>
             <CalendarHeader>
@@ -141,19 +156,20 @@ function Calendar({date}) {
                 {
                     weekDayNames.map(day => <WeekDayCell>{day.toUpperCase()}</WeekDayCell>)
                 }
+
                 {
-                    getBeforeDates(pointer).map((day, index) => <DateCell key={"before_" + index} out>{day}</DateCell>)
+                    getAllDates(pointer).map((day) =>
+                         <DayCell dayText={day.getDate()} isIn={day.getMonth() === pointer.getMonth()} isSelected={ydmEquals(day, pointer)}/>
+                    )
+                    
                 }
-                {
-                    getMonthDates(pointer).map((day, index) => <DateCell key={"in_" + index} onClick={() => console.log(`Clicked => ${day}`)}>{day}</DateCell>)
-                }
-                {
-                    getAfterDates(pointer).map((day, index) => <DateCell key={"after_" + index} out>{day}</DateCell>)
-                }
+
             </DaysContainer>
 
             <SelectionControl>
-
+                {
+                    <span>selectedDate</span>
+                }
             </SelectionControl>
 
             <CalendarFooter>
