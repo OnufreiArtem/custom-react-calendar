@@ -13,6 +13,7 @@ const BasicCell = styled.span`
     padding: 5px;
     font-size: 1rem;
     transition: 0.3s all;
+    border-radius: 999px;
     color: #40394a;
     background-color: transparent;
 `;
@@ -50,8 +51,8 @@ export default function DayCell({
 
     const getCell = (selected) => {
         let date = day.getDate();
-        if(isIn && selected) return <SelectedInCell onClick={() => onDayClicked(day)}>{date}</SelectedInCell>
-        else if(isIn && !selected) return <InCell onClick={() => onDayClicked(day)}>{date}</InCell>
+        if(isIn && selected) return <SelectedInCell>{date}</SelectedInCell>
+        else if(isIn && !selected) return <InCell>{date}</InCell>
         else if(!isIn && selected) return <SelectedOutCell>{date}</SelectedOutCell>
         if(!isIn && !selected) return <OutCell>{date}</OutCell>
     }
