@@ -4,7 +4,8 @@ import PropTypes from "prop-types";
 import styled, {keyframes} from "styled-components";
 
 import {InCell, OutCell, SelectedInCell, SelectedOutCell, WeekDayCell, RangeInCell, RangeOutCell} from "./StyledCells";
-import {CalendarContainer, CalendarHeader, CalendarTitle, MoveArrow, DaysContainer, Selection, Divider, SelectionControl} from "./StyledCalendarLayouts"
+import {CalendarContainer, CalendarHeader, CalendarTitle, MoveArrow, DaysContainer, Selection, Divider, SelectionControl, SelectionCloseBtn} from "./StyledCalendarLayouts"
+import { sameMonths, ydmEquals, addMonth, dateFormat, dateRangeFormat, dateBetween } from "./CalendarUtils";
 
 function Calendar({ date, type }) {
     const NUMBER_OF_ROWS = 6;
@@ -13,10 +14,6 @@ function Calendar({ date, type }) {
 
     const [selectedDate, setSelectedDate] = useState(undefined);
     
-    const [selectedRangePair, setRangePair] = useState({ 
-        first: undefined,
-        last: undefined
-    })
     const [selectedRanges, setSelectedRanges] = useState([{ 
         first: undefined,
         last: undefined
@@ -51,72 +48,11 @@ function Calendar({ date, type }) {
         });
     };
 
-    const dateFormat = (date) => {
-        if(!date) return;
-        return `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
-    }
-
-    const dateRangeFormat = (pair) => {
-        return `${pair.first !== undefined ? dateFormat(pair.first) : "_"} - ${pair.last !== undefined ? dateFormat(pair.last) : "_"}`;
-    }
-
-    const ydmEquals = (date1, date2) => {
-        return (
-            date1?.getDate() === date2?.getDate() &&
-            date1?.getFullYear() === date2?.getFullYear() &&
-            date1?.getMonth() === date2?.getMonth()
-        );
-    };
-
-    const movePointerLeft = (_) => {
-        let tempDate = new Date(pointer.getTime());
-        tempDate.setMonth(tempDate.getMonth() - 1);
-        setPointer(tempDate);
-    };
-
-    const movePointerRight = (_) => {
-        let tempDate = new Date(pointer.getTime());
-        tempDate.setMonth(tempDate.getMonth() + 1);
-        setPointer(tempDate);
-    };
-
     const onDayClick = (date) => {
-        setSelectedDate(date);
+        setSelectedDate(ydmEquals(selectedDate, date) ? undefined : date);
     };
 
-    const setStart = (date) => {
-        let obj = {
-            first: selectedRangePair.first,
-            last: selectedRangePair.last,
-        };
-
-        obj.first = date;
-        if(obj.last !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
-        setRangePair(obj)
-    }
-
-    const setEnd = (date) => {
-        let obj = {
-            first: selectedRangePair.first,
-            last: selectedRangePair.last,
-        };
-
-        obj.last = date;
-        if(obj.first !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
-        setRangePair(obj)
-    }
-
-    const onRangeDayClick = (date, e) => {
-        if(e === undefined || ydmEquals(date, selectedRangePair.first) || ydmEquals(date, selectedRangePair.last)) return;
-
-        if(e.shiftKey) {
-            setEnd(date);
-        } else {
-            setStart(date)
-        }
-    };
-
-    const setStartInRange = (date, index) => {
+    const setStart = (date, index) => {
         let obj = {
             first: selectedRanges[index].first,
             last: selectedRanges[index].last,
@@ -124,10 +60,10 @@ function Calendar({ date, type }) {
 
         obj.first = date;
         if(obj.last !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
-        setRangePair(obj)
+        setSelectedRanges(selectedRanges.map((range, idx) => idx == index ? obj : range))
     }
 
-    const setEndInRange = (date, index) => {
+    const setEnd = (date, index) => {
         let obj = {
             first: selectedRanges[index].first,
             last: selectedRanges[index].last,
@@ -135,29 +71,37 @@ function Calendar({ date, type }) {
 
         obj.last = date;
         if(obj.first !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
-        setRangePair(obj)
+        setSelectedRanges(selectedRanges.map((range, idx) => idx == index ? obj : range))
     }
 
-    const onMultiRangeDayClick = (date, index, e) => {
-        if(e === undefined || ydmEquals(date, selectedRangePair.first) || ydmEquals(date, selectedRangePair.last)) return;
+    const onRangeDayClick = (date, index, e) => {
+        if(e === undefined || ydmEquals(date, selectedRanges[index].first) || ydmEquals(date, selectedRanges[index].last)) return;
 
         if(e.shiftKey) {
-            setEndInRange(date, index);
+            setEnd(date, index);
         } else {
-            setStartInRange(date, index)
+            setStart(date, index)
         }
     };
+
+    const onRemoveSelection = (selectionIndex) => {
+        let rangesLeft = selectedRanges.filter((_, index) => index !== selectionIndex);
+        if(rangesLeft.length <= 0) rangesLeft.push({first: undefined, last: undefined}) ;
+        console.log(rangesLeft)
+        setSelectedRanges( rangesLeft );
+        setSelectedRangesIndex(0);
+    }
 
     return (
         <CalendarContainer>
             <CalendarHeader>
-                <MoveArrow onClick={() => movePointerLeft()}>
+                <MoveArrow onClick={() => setPointer(addMonth(pointer, -1))}>
                     <i className="fas fa-chevron-left"></i>
                 </MoveArrow>
                 <CalendarTitle>{`${
                     monthNames[pointer.getMonth()]
                 } ${pointer.getFullYear()}`}</CalendarTitle>
-                <MoveArrow onClick={() => movePointerRight()}>
+                <MoveArrow onClick={() => setPointer(addMonth(pointer, 1))}>
                     <i className="fas fa-chevron-right"></i>
                 </MoveArrow>
             </CalendarHeader>
@@ -168,69 +112,44 @@ function Calendar({ date, type }) {
 
                 {
                     getAllDates(pointer).map((day) => {
+
+                        let isInMonth = sameMonths(day, pointer);
+                       
                         if(type === "single") {
-                            if(day.getMonth() === pointer.getMonth()) {          
-                                return ydmEquals(day, selectedDate) ? <SelectedInCell onClick={() => onDayClick(new Date(0))}>{day.getDate()}</SelectedInCell>
-                                    : <InCell onClick={() => onDayClick(day)}>{day.getDate()}</InCell>;
-                            } 
-                            else {
-                                return ydmEquals(day, selectedDate) ? <SelectedOutCell>{day.getDate()}</SelectedOutCell>
-                                : <OutCell>{day.getDate()}</OutCell> 
-                            }
+                            let isSelected = ydmEquals(day, selectedDate);
+
+                            if(isInMonth && isSelected) return <SelectedInCell onClick={() => onDayClick(day)}>{day.getDate()}</SelectedInCell>;
+                            if(isInMonth && !isSelected) return <InCell onClick={() => onDayClick(day)}>{day.getDate()}</InCell>;
+                            if(!isInMonth && isSelected) return <SelectedOutCell>{day.getDate()}</SelectedOutCell>;
+                            if(!isInMonth && !isSelected) return <OutCell>{day.getDate()}</OutCell>;
                         }
 
                         if(type === "range") {
-                            if(day.getMonth() === pointer.getMonth()) {      
-                                
-                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
-                                    return <SelectedInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</SelectedInCell>
-                                } else {
-                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
-                                        return <RangeInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</RangeInCell>;
-                                    } else {
-                                        return <InCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</InCell>;
-                                    }
-                                }
-                            } 
-                            else {
-                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
-                                    return <SelectedOutCell>{day.getDate()}</SelectedOutCell>
-                                } else {
-                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
-                                        return <RangeOutCell>{day.getDate()}</RangeOutCell>;
-                                    } else {
-                                        return <OutCell>{day.getDate()}</OutCell>;
-                                    }
-                                }
-                            }
+
+                            let isSelected = ydmEquals(day, selectedRanges[0]?.first) || ydmEquals(day, selectedRanges[0]?.last);
+                            let isInRange = dateBetween(day, selectedRanges[0]?.first, selectedRanges[0]?.last);
+
+                            if(isInMonth && isSelected) return <SelectedInCell onClick={(e) => onRangeDayClick(day, 0, e)}>{day.getDate()}</SelectedInCell>;
+                            if(isInMonth && !isSelected && isInRange) return <RangeInCell onClick={(e) => onRangeDayClick(day, 0, e)}>{day.getDate()}</RangeInCell>;
+                            if(isInMonth && !isSelected && !isInRange) return <InCell onClick={(e) => onRangeDayClick(day, 0, e)}>{day.getDate()}</InCell>;
+                            if(!isInMonth && isSelected) return <SelectedOutCell>{day.getDate()}</SelectedOutCell>;
+                            if(!isInMonth && !isSelected && isInRange) return <RangeOutCell>{day.getDate()}</RangeOutCell>;
+                            if(!isInMonth && !isSelected && !isInRange) return <OutCell>{day.getDate()}</OutCell>;
+
                         }
 
                         if(type === "multiRange") {
-                            if(day.getMonth() === pointer.getMonth()) {
-                                
-                                if(ydmEquals(day, selectedRanges[selectedRangesIndex].first) || ydmEquals(day, selectedRangePair.last)) {
-                                    return <SelectedInCell onClick={(e) => onMultiRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</SelectedInCell>
-                                } else {
-                                    if(day > selectedRanges[selectedRangesIndex].first && day < selectedRanges[selectedRangesIndex].last) {
-                                        return <RangeInCell onClick={(e) => onMultiRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</RangeInCell>;
-                                    } else {
-                                        return <InCell onClick={(e) => onMultiRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</InCell>;
-                                    }
-                                }
-                            } 
-                            else {
-                                if(ydmEquals(day, selectedRanges[selectedRangesIndex].first) || ydmEquals(day, selectedRanges[selectedRangesIndex].last)) {
-                                    return <SelectedOutCell>{day.getDate()}</SelectedOutCell>
-                                } else {
-                                    if(day > selectedRanges[selectedRangesIndex].first && day < selectedRanges[selectedRangesIndex].last) {
-                                        return <RangeOutCell>{day.getDate()}</RangeOutCell>;
-                                    } else {
-                                        return <OutCell>{day.getDate()}</OutCell>;
-                                    }
-                                }
-                            }
+                            let isSelected = ydmEquals(day, selectedRanges[selectedRangesIndex]?.first) || ydmEquals(day, selectedRanges[selectedRangesIndex]?.last);
+                            let isInRange = dateBetween(day, selectedRanges[selectedRangesIndex]?.first, selectedRanges[selectedRangesIndex]?.last);
+
+                            if(isInMonth && isSelected) return <SelectedInCell onClick={(e) => onRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</SelectedInCell>;
+                            if(isInMonth && !isSelected && isInRange) return <RangeInCell onClick={(e) => onRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</RangeInCell>;
+                            if(isInMonth && !isSelected && !isInRange) return <InCell onClick={(e) => onRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</InCell>;
+                            if(!isInMonth && isSelected) return <SelectedOutCell>{day.getDate()}</SelectedOutCell>;
+                            if(!isInMonth && !isSelected && isInRange) return <RangeOutCell>{day.getDate()}</RangeOutCell>;
+                            if(!isInMonth && !isSelected && !isInRange) return <OutCell>{day.getDate()}</OutCell>;
+
                         }
-                         
                     })
 
                 }
@@ -238,31 +157,47 @@ function Calendar({ date, type }) {
             </DaysContainer>
 
             <Divider />
+            
             <SelectionControl>
-                {
-                    (() => {
-                        if(type==="single") return <Selection>{dateFormat(selectedDate)}</Selection>
-                        else if(type==="range") return <Selection>{dateRangeFormat(selectedRangePair)}</Selection>
-                        else if(type==="multiRange") 
-                            return selectedRanges.map((obj, index) => <Selection selected={index === selectedRangesIndex}
-                                 onClick={() => {setSelectedRangesIndex(index);}}>{dateRangeFormat(obj)}</Selection>)
-                    })()
-                }
+
                 {
                     (()=> {
                         if(type==="multiRange") {
-                            <Selection onClick={() => {
+                            return <Selection onClick={() => {
                                 setSelectedRanges([...selectedRanges, { 
                                     first: undefined,
                                     last: undefined
                                 }]);
-                                setSelectedRangesIndex(selectedRanges.length - 1);
-                            }}>+</Selection>
+                                setSelectedRangesIndex(selectedRanges.length);
+                            }}>Add range</Selection>
                         }
                     })()
                 }
+
+
+                {
+                    (() => {
+                        if(type==="single" && selectedDate !== undefined) return <Selection>{dateFormat(selectedDate)}</Selection>
+                        else if(type==="range" && !(selectedRanges[0].first === undefined && selectedRanges[0].last === undefined))
+                            return (
+                                <Selection>
+                                    <span>{dateRangeFormat(selectedRanges[selectedRangesIndex])}</span> 
+                                    <SelectionCloseBtn onClick={() => onRemoveSelection(0)} className="fas fa-times" />
+                                </Selection>
+                            );
+                        else if(type==="multiRange") 
+                            return selectedRanges.map((obj, index) => 
+                                <Selection selected={index === selectedRangesIndex} onClick={() => {setSelectedRangesIndex(index);}}>
+                                    <span>{dateRangeFormat(obj)}</span> 
+                                    <SelectionCloseBtn onClick={() => onRemoveSelection(index)} className="fas fa-times" />
+                                </Selection>)
+                    })()
+                }
+
+
                 
             </SelectionControl>
+            
         </CalendarContainer>
     );
 }
