@@ -17,7 +17,10 @@ function Calendar({ date, type }) {
         first: undefined,
         last: undefined
     })
-    const [selectedRanges, setSelectedRanges] = useState([]) 
+    const [selectedRanges, setSelectedRanges] = useState([{ 
+        first: undefined,
+        last: undefined
+    }]) 
     const [selectedRangesIndex, setSelectedRangesIndex] = useState(0)
 
     const monthNames = [
@@ -88,6 +91,10 @@ function Calendar({ date, type }) {
         font-size: 0.7rem;
         padding: 5px 10px;
         transition: .3s all;
+        ${
+            props => { if(props.selected) return "transform: scale(1.2);"}
+        }
+        
     `
 
     const Divider = styled.hr`
@@ -175,6 +182,38 @@ function Calendar({ date, type }) {
         }
     };
 
+    const setStartInRange = (date, index) => {
+        let obj = {
+            first: selectedRanges[index].first,
+            last: selectedRanges[index].last,
+        };
+
+        obj.first = date;
+        if(obj.last !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
+        setRangePair(obj)
+    }
+
+    const setEndInRange = (date, index) => {
+        let obj = {
+            first: selectedRanges[index].first,
+            last: selectedRanges[index].last,
+        };
+
+        obj.last = date;
+        if(obj.first !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
+        setRangePair(obj)
+    }
+
+    const onMultiRangeDayClick = (date, index, e) => {
+        if(e === undefined || ydmEquals(date, selectedRangePair.first) || ydmEquals(date, selectedRangePair.last)) return;
+
+        if(e.shiftKey) {
+            setEndInRange(date, index);
+        } else {
+            setStartInRange(date, index)
+        }
+    };
+
     return (
         <CalendarContainer>
             <CalendarHeader>
@@ -195,7 +234,6 @@ function Calendar({ date, type }) {
 
                 {
                     getAllDates(pointer).map((day) => {
-
                         if(type === "single") {
                             if(day.getMonth() === pointer.getMonth()) {          
                                 return ydmEquals(day, selectedDate) ? <SelectedInCell onClick={() => onDayClick(new Date(0))}>{day.getDate()}</SelectedInCell>
@@ -234,23 +272,23 @@ function Calendar({ date, type }) {
                         }
 
                         if(type === "multiRange") {
-                            if(day.getMonth() === pointer.getMonth()) {      
+                            if(day.getMonth() === pointer.getMonth()) {
                                 
-                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
-                                    return <SelectedInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</SelectedInCell>
+                                if(ydmEquals(day, selectedRanges[selectedRangesIndex].first) || ydmEquals(day, selectedRangePair.last)) {
+                                    return <SelectedInCell onClick={(e) => onMultiRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</SelectedInCell>
                                 } else {
-                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
-                                        return <RangeInCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</RangeInCell>;
+                                    if(day > selectedRanges[selectedRangesIndex].first && day < selectedRanges[selectedRangesIndex].last) {
+                                        return <RangeInCell onClick={(e) => onMultiRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</RangeInCell>;
                                     } else {
-                                        return <InCell onClick={(e) => onRangeDayClick(day, e)}>{day.getDate()}</InCell>;
+                                        return <InCell onClick={(e) => onMultiRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</InCell>;
                                     }
                                 }
                             } 
                             else {
-                                if(ydmEquals(day, selectedRangePair.first) || ydmEquals(day, selectedRangePair.last)) {
+                                if(ydmEquals(day, selectedRanges[selectedRangesIndex].first) || ydmEquals(day, selectedRanges[selectedRangesIndex].last)) {
                                     return <SelectedOutCell>{day.getDate()}</SelectedOutCell>
                                 } else {
-                                    if(day > selectedRangePair.first && day < selectedRangePair.last) {
+                                    if(day > selectedRanges[selectedRangesIndex].first && day < selectedRanges[selectedRangesIndex].last) {
                                         return <RangeOutCell>{day.getDate()}</RangeOutCell>;
                                     } else {
                                         return <OutCell>{day.getDate()}</OutCell>;
@@ -271,6 +309,22 @@ function Calendar({ date, type }) {
                     (() => {
                         if(type==="single") return <Selection>{dateFormat(selectedDate)}</Selection>
                         else if(type==="range") return <Selection>{dateRangeFormat(selectedRangePair)}</Selection>
+                        else if(type==="multiRange") 
+                            return selectedRanges.map((obj, index) => <Selection selected={index === selectedRangesIndex}
+                                 onClick={() => {setSelectedRangesIndex(index);}}>{dateRangeFormat(obj)}</Selection>)
+                    })()
+                }
+                {
+                    (()=> {
+                        if(type==="multiRange") {
+                            <Selection onClick={() => {
+                                setSelectedRanges([...selectedRanges, { 
+                                    first: undefined,
+                                    last: undefined
+                                }]);
+                                setSelectedRangesIndex(selectedRanges.length - 1);
+                            }}>+</Selection>
+                        }
                     })()
                 }
                 
