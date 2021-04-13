@@ -13,29 +13,9 @@ function App() {
     align-items: center;
   `;
 
-  const PopupButton = styled.button`
-    border-radius: 5px;
-    background-color: #7eca9c;
-    border: none;
-    box-shadow: 0 0 8px #0004;
-    transition: 0.3s all;
-    font-size: 1.2rem;
-    color: #40394a;
-    padding: 0.5rem;
-    margin: 1rem;
-
-    &:hover {
-      background-color: #ccffbd;
-    }
-
-    &:focus {
-      outline: none;
-    }
-  `;
-
   return (
     <AppContainer>
-      <Calendar id="calendar1" shown={true} type="multiRange" date={new Date()}/>
+      <Calendar id="calendar1" shown={true} type="range" date={new Date()}/>
       
     </AppContainer>
   );

@@ -39,7 +39,7 @@ function Calendar({ date, type }) {
 
     const CalendarContainer = styled.div`
         box-shadow: 0 0 10px #0005;
-        padding: 2rem 1rem;
+        padding: 1rem 1rem;
         border-radius: 5px;
     `;
 
@@ -48,6 +48,7 @@ function Calendar({ date, type }) {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        color: #153e90;
     `;
 
     const CalendarTitle = styled.span`
@@ -62,6 +63,7 @@ function Calendar({ date, type }) {
         display: flex;
         justify-content: center;
         align-items: center;
+        color: #153e90;
         transition: 0.3s all;
 
         &:hover {
@@ -73,6 +75,7 @@ function Calendar({ date, type }) {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         grid-column-gap: 10px;
+        grid-row-gap: 10px;
         text-align: center;
     `;
 
@@ -80,7 +83,8 @@ function Calendar({ date, type }) {
         display: inline-block;
         margin: 5px;
         border-radius: 999px;
-        background-color: #ccc;
+        background-color: #153e90;
+        color: #fff;
         font-size: 0.7rem;
         padding: 5px 10px;
         transition: .3s all;
@@ -95,9 +99,6 @@ function Calendar({ date, type }) {
     const SelectionControl = styled.div`
         padding: 1rem;
     `;
-
-    const CalendarFooter = styled.div``;
-
     const getAllDates = (date) => {
         let mDate = new Date(date.getTime());
         mDate.setDate(0);
@@ -274,8 +275,6 @@ function Calendar({ date, type }) {
                 }
                 
             </SelectionControl>
-            <Divider />
-            <CalendarFooter></CalendarFooter>
         </CalendarContainer>
     );
 }

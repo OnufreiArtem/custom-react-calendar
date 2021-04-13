@@ -19,10 +19,9 @@ export const BasicCell = styled.span`
     justify-content: center;
     align-items: center;
     aspect-ratio: 1/1;
-    padding: 5px;
+    padding: px;
     font-size: 1rem;
     transition: 0.3s all;
-    border-radius: 999px;
     color: #40394a;
     background-color: transparent;
     user-select: none;
@@ -40,40 +39,28 @@ export const OutCell = styled(BasicCell)`
     color: #ccc;
 `;
 
-/*
-    position: relative;
-    
-    &::before {
-        content: '';
-        display: block;
-        width: 8px;
-        height: 4px;
-        position: absolute;
-        border-radius: 999px;
-        top: 80%;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #a3bad9;
-        animation: ${popup} .15s linear;
-    }
-*/
-
-export const RangeInCell = styled(InCell)` 
-    
-    color: blue;
-
+export const RangeInCell = styled(InCell)`  
+    color: #0e49b5;
+    background-color: #0e49b555;
+    font-weight: bold;
+    border-radius: 999px;
+    animation: ${popup} .15s linear;
 `
 
 export const RangeOutCell = styled(OutCell)`
-    background-color: #a3bad6;
+    color: #fff;
+    background-color: #0e49b522;
+    border-radius: 999px;
+    animation: ${popup} .15s linear;
 `
 
 export const SelectedInCell = styled(InCell)`
-    color: red;
+    color: #fff;
+    background-color: #153e90;
     box-shadow: 0 0 5px #0005;
     animation: ${popup} .15s linear;
 `
 
 export const SelectedOutCell = styled(OutCell)`
-    background-color: #ccc3
+    background-color: #153e90AA
 `
