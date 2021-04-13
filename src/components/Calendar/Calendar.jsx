@@ -4,11 +4,11 @@ import PropTypes from "prop-types";
 import styled, {keyframes} from "styled-components";
 
 import {InCell, OutCell, SelectedInCell, SelectedOutCell, WeekDayCell, RangeInCell, RangeOutCell} from "./StyledCells";
+import {CalendarContainer, CalendarHeader, CalendarTitle, MoveArrow, DaysContainer, Selection, Divider, SelectionControl} from "./StyledCalendarLayouts"
 
 function Calendar({ date, type }) {
     const NUMBER_OF_ROWS = 6;
 
-    const [current, setCurrent] = useState(new Date(date.getTime()));
     const [pointer, setPointer] = useState(new Date(date.getTime()));
 
     const [selectedDate, setSelectedDate] = useState(undefined);
@@ -40,72 +40,6 @@ function Calendar({ date, type }) {
 
     const weekDayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-    const CalendarContainer = styled.div`
-        box-shadow: 0 0 10px #0005;
-        padding: 1rem 1rem;
-        border-radius: 5px;
-    `;
-
-    const CalendarHeader = styled.div`
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        color: #153e90;
-    `;
-
-    const CalendarTitle = styled.span`
-        font-size: 2rem;
-        font-weight: bold;
-        font-family: "Dancing Script", cursive;
-    `;
-    const MoveArrow = styled.div`
-        aspect-ratio: 1/1;
-        font-size: 2rem;
-        padding: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: #153e90;
-        transition: 0.3s all;
-
-        &:hover {
-            background-color: #ccc;
-        }
-    `;
-
-    const DaysContainer = styled.div`
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        grid-column-gap: 10px;
-        grid-row-gap: 10px;
-        text-align: center;
-    `;
-
-    const Selection = styled.span`
-        display: inline-block;
-        margin: 5px;
-        border-radius: 999px;
-        background-color: #153e90;
-        color: #fff;
-        font-size: 0.7rem;
-        padding: 5px 10px;
-        transition: .3s all;
-        ${
-            props => { if(props.selected) return "transform: scale(1.2);"}
-        }
-        
-    `
-
-    const Divider = styled.hr`
-        border: none;
-        height: 2px;
-        border-radius: 5px;
-    `
-
-    const SelectionControl = styled.div`
-        padding: 1rem;
-    `;
     const getAllDates = (date) => {
         let mDate = new Date(date.getTime());
         mDate.setDate(0);
