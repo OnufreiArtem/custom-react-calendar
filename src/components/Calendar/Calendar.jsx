@@ -60,7 +60,7 @@ function Calendar({ date, type }) {
 
         obj.first = date;
         if(obj.last !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
-        setSelectedRanges(selectedRanges.map((range, idx) => idx == index ? obj : range))
+        setSelectedRanges(selectedRanges.map((range, idx) => idx === index ? obj : range))
     }
 
     const setEnd = (date, index) => {
@@ -71,7 +71,7 @@ function Calendar({ date, type }) {
 
         obj.last = date;
         if(obj.first !== undefined && obj.first > obj.last) [obj.first, obj.last] = [obj.last, obj.first];
-        setSelectedRanges(selectedRanges.map((range, idx) => idx == index ? obj : range))
+        setSelectedRanges(selectedRanges.map((range, idx) => idx === index ? obj : range))
     }
 
     const onRangeDayClick = (date, index, e) => {
@@ -203,6 +203,7 @@ function Calendar({ date, type }) {
 }
 
 Calendar.prototype = {
+    type: PropTypes.string,
     date: PropTypes.date,
 };
 

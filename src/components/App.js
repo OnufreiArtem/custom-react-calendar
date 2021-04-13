@@ -6,19 +6,18 @@ import Calendar from "./Calendar/Calendar"
 function App() {
   const AppContainer = styled.div`
     background-color: white;
-    padding: 7% 15%;
+    padding: 7%;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
   `;
 
   return (
     <AppContainer>
-      <Calendar id="calendar1" shown={true} type="single" date={new Date()}/>
-      <Calendar id="calendar2" shown={true} type="range" date={new Date()}/>
-      <Calendar id="calendar3" shown={true} type="multiRange" date={new Date()}/>
-      
+      <Calendar id="calendar1" type="single" date={new Date()}/>
+      <Calendar id="calendar2" type="range" date={new Date()}/>
+      <Calendar id="calendar3" type="multiRange" date={new Date()}/>
     </AppContainer>
   );
 }

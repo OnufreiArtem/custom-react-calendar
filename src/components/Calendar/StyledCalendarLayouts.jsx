@@ -5,6 +5,7 @@ export const CalendarContainer = styled.div`
     padding: 1rem 1rem;
     border-radius: 5px;
     width: 400px;
+    margin: 2rem;
     `;
 
 export const CalendarHeader = styled.div`
