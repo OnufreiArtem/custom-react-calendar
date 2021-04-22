@@ -73,7 +73,6 @@ export const SelectionCloseBtn = styled.i`
     }
 `
 
-
 export const Divider = styled.hr`
     border: none;
     height: 2px;

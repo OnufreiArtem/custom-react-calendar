@@ -1,12 +1,14 @@
 import React, { useState } from "react";
+import { nanoid } from 'nanoid'
 
 import PropTypes from "prop-types";
-import styled, {keyframes} from "styled-components";
 
-import {InCell, OutCell, SelectedInCell, SelectedOutCell, WeekDayCell, RangeInCell, RangeOutCell} from "./StyledCells";
-import {CalendarContainer, CalendarHeader, CalendarTitle, MoveArrow, DaysContainer, Selection, Divider, SelectionControl, SelectionCloseBtn} from "./StyledCalendarLayouts"
+import { WeekDayCell} from "./StyledCells";
+import { CalendarContainer, CalendarHeader, CalendarTitle, MoveArrow, DaysContainer, Selection, Divider, SelectionControl, SelectionCloseBtn} from "./StyledCalendarLayouts"
 import { sameMonths, ydmEquals, addMonth, dateFormat, dateRangeFormat, dateBetween } from "./CalendarUtils";
-import {monthNames, weekDayNames, NUMBER_OF_ROWS} from "./Constants";
+import { monthNames, weekDayNames, NUMBER_OF_ROWS} from "./Constants";
+
+import CalendarCell from "./CalendarCell";
 
 function Calendar({ date, type }) {
 
@@ -18,12 +20,13 @@ function Calendar({ date, type }) {
         first: undefined,
         last: undefined
     }]) 
+
     const [selectedRangesIndex, setSelectedRangesIndex] = useState(0)
 
     const getAllDates = (date) => {
-        let mDate = new Date(date.getTime());
+        const mDate = new Date(date.getTime());
         mDate.setDate(0);
-        let daysBefore = mDate.getDay();
+        const daysBefore = mDate.getDay();
         mDate.setDate(mDate.getDate() - daysBefore);
         return new Array(7 * NUMBER_OF_ROWS).fill(0).map(() => {
             mDate.setDate(mDate.getDate() + 1);
@@ -31,12 +34,10 @@ function Calendar({ date, type }) {
         });
     };
 
-    const onDayClick = (date) => {
-        setSelectedDate(ydmEquals(selectedDate, date) ? undefined : date);
-    };
+    const onDayClick = (date) => setSelectedDate(ydmEquals(selectedDate, date) ? undefined : date);
 
     const setStart = (date, index) => {
-        let obj = {
+        const obj = {
             first: selectedRanges[index].first,
             last: selectedRanges[index].last,
         };
@@ -47,7 +48,7 @@ function Calendar({ date, type }) {
     }
 
     const setEnd = (date, index) => {
-        let obj = {
+        const obj = {
             first: selectedRanges[index].first,
             last: selectedRanges[index].last,
         };
@@ -57,20 +58,14 @@ function Calendar({ date, type }) {
         setSelectedRanges(selectedRanges.map((range, idx) => idx === index ? obj : range))
     }
 
-    const onRangeDayClick = (date, index, e) => {
+    const onRangeDayClick = (e, date, index) => {
         if(e === undefined || ydmEquals(date, selectedRanges[index].first) || ydmEquals(date, selectedRanges[index].last)) return;
-
-        if(e.shiftKey) {
-            setEnd(date, index);
-        } else {
-            setStart(date, index)
-        }
+        e.shiftKey ? setEnd(date, index) : setStart(date, index);
     };
 
     const onRemoveSelection = (selectionIndex) => {
         let rangesLeft = selectedRanges.filter((_, index) => index !== selectionIndex);
         if(rangesLeft.length <= 0) rangesLeft.push({first: undefined, last: undefined}) ;
-        console.log(rangesLeft)
         setSelectedRanges( rangesLeft );
         setSelectedRangesIndex(0);
     }
@@ -90,49 +85,38 @@ function Calendar({ date, type }) {
             </CalendarHeader>
             <DaysContainer>
                 {weekDayNames.map((day) => (
-                    <WeekDayCell>{day.toUpperCase()}</WeekDayCell>
+                    <WeekDayCell key={nanoid()}>{day.toUpperCase()}</WeekDayCell>
                 ))}
 
                 {
                     getAllDates(pointer).map((day) => {
 
                         let isInMonth = sameMonths(day, pointer);
-                       
-                        if(type === "single") {
-                            let isSelected = ydmEquals(day, selectedDate);
+                        let isSelected = false;
+                        let isInRange = false;
+                        let clickFunc = undefined;
 
-                            if(isInMonth && isSelected) return <SelectedInCell onClick={() => onDayClick(day)}>{day.getDate()}</SelectedInCell>;
-                            if(isInMonth && !isSelected) return <InCell onClick={() => onDayClick(day)}>{day.getDate()}</InCell>;
-                            if(!isInMonth && isSelected) return <SelectedOutCell>{day.getDate()}</SelectedOutCell>;
-                            if(!isInMonth && !isSelected) return <OutCell>{day.getDate()}</OutCell>;
+                        switch(type) {
+                            case "single":
+                                isSelected = ydmEquals(day, selectedDate);
+                                clickFunc = () => onDayClick(day)
+                                break;
+                            case "range":
+                                isSelected = ydmEquals(day, selectedRanges[0]?.first) || ydmEquals(day, selectedRanges[0]?.last);
+                                isInRange = dateBetween(day, selectedRanges[0]?.first, selectedRanges[0]?.last);
+                                clickFunc = (e) => onRangeDayClick(e, day, 0);
+                                break;
+                            case "multiRange":
+                                isSelected = ydmEquals(day, selectedRanges[selectedRangesIndex]?.first) || ydmEquals(day, selectedRanges[selectedRangesIndex]?.last);
+                                isInRange = dateBetween(day, selectedRanges[selectedRangesIndex]?.first, selectedRanges[selectedRangesIndex]?.last);
+                                clickFunc = (e) => onRangeDayClick(e, day, selectedRangesIndex);   
+                                break;  
+                            default:
+                                break;  
                         }
 
-                        if(type === "range") {
-
-                            let isSelected = ydmEquals(day, selectedRanges[0]?.first) || ydmEquals(day, selectedRanges[0]?.last);
-                            let isInRange = dateBetween(day, selectedRanges[0]?.first, selectedRanges[0]?.last);
-
-                            if(isInMonth && isSelected) return <SelectedInCell onClick={(e) => onRangeDayClick(day, 0, e)}>{day.getDate()}</SelectedInCell>;
-                            if(isInMonth && !isSelected && isInRange) return <RangeInCell onClick={(e) => onRangeDayClick(day, 0, e)}>{day.getDate()}</RangeInCell>;
-                            if(isInMonth && !isSelected && !isInRange) return <InCell onClick={(e) => onRangeDayClick(day, 0, e)}>{day.getDate()}</InCell>;
-                            if(!isInMonth && isSelected) return <SelectedOutCell>{day.getDate()}</SelectedOutCell>;
-                            if(!isInMonth && !isSelected && isInRange) return <RangeOutCell>{day.getDate()}</RangeOutCell>;
-                            if(!isInMonth && !isSelected && !isInRange) return <OutCell>{day.getDate()}</OutCell>;
-
-                        }
-
-                        if(type === "multiRange") {
-                            let isSelected = ydmEquals(day, selectedRanges[selectedRangesIndex]?.first) || ydmEquals(day, selectedRanges[selectedRangesIndex]?.last);
-                            let isInRange = dateBetween(day, selectedRanges[selectedRangesIndex]?.first, selectedRanges[selectedRangesIndex]?.last);
-
-                            if(isInMonth && isSelected) return <SelectedInCell onClick={(e) => onRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</SelectedInCell>;
-                            if(isInMonth && !isSelected && isInRange) return <RangeInCell onClick={(e) => onRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</RangeInCell>;
-                            if(isInMonth && !isSelected && !isInRange) return <InCell onClick={(e) => onRangeDayClick(day, selectedRangesIndex, e)}>{day.getDate()}</InCell>;
-                            if(!isInMonth && isSelected) return <SelectedOutCell>{day.getDate()}</SelectedOutCell>;
-                            if(!isInMonth && !isSelected && isInRange) return <RangeOutCell>{day.getDate()}</RangeOutCell>;
-                            if(!isInMonth && !isSelected && !isInRange) return <OutCell>{day.getDate()}</OutCell>;
-
-                        }
+                        return <CalendarCell onClick={clickFunc}
+                                key={nanoid()} inMonth={isInMonth} selected={isSelected} inRange={isInRange}>{day.getDate()}</CalendarCell>
                     })
 
                 }
@@ -140,54 +124,51 @@ function Calendar({ date, type }) {
             </DaysContainer>
 
             <Divider />
-            
+
             <SelectionControl>
 
-                {
-                    (()=> {
-                        if(type==="multiRange") {
-                            return <Selection onClick={() => {
-                                setSelectedRanges([...selectedRanges, { 
-                                    first: undefined,
-                                    last: undefined
-                                }]);
-                                setSelectedRangesIndex(selectedRanges.length);
+            {
+                ( () => {
+                    if(type === "single" && selectedDate !== undefined) {
+                        return <Selection>{dateFormat(selectedDate)}</Selection> 
+                        
+                    } else if(type === "range" && !(selectedRanges[0].first === undefined && selectedRanges[0].last === undefined)) {
+                        return <Selection>
+                            <span>{dateRangeFormat(selectedRanges[selectedRangesIndex])}</span> 
+                            <SelectionCloseBtn onClick={() => onRemoveSelection(0)} className="fas fa-times" />
+                        </Selection>
+
+                    } else if(type === "multiRange") {
+                        return <>
+                            <Selection onClick={() => {
+                                    setSelectedRanges([...selectedRanges, { 
+                                        first: undefined,
+                                        last: undefined
+                                    }]);
+                                    setSelectedRangesIndex(selectedRanges.length);
                             }}>Add range</Selection>
-                        }
-                    })()
-                }
 
-
-                {
-                    (() => {
-                        if(type==="single" && selectedDate !== undefined) return <Selection>{dateFormat(selectedDate)}</Selection>
-                        else if(type==="range" && !(selectedRanges[0].first === undefined && selectedRanges[0].last === undefined))
-                            return (
-                                <Selection>
-                                    <span>{dateRangeFormat(selectedRanges[selectedRangesIndex])}</span> 
-                                    <SelectionCloseBtn onClick={() => onRemoveSelection(0)} className="fas fa-times" />
-                                </Selection>
-                            );
-                        else if(type==="multiRange") 
-                            return selectedRanges.map((obj, index) => 
-                                <Selection selected={index === selectedRangesIndex} onClick={() => {setSelectedRangesIndex(index);}}>
+                            {
+                                selectedRanges.map((obj, index) => 
+                                <Selection key={nanoid()} selected={index === selectedRangesIndex} onClick={() => { setSelectedRangesIndex(index); }}>
                                     <span>{dateRangeFormat(obj)}</span> 
                                     <SelectionCloseBtn onClick={() => onRemoveSelection(index)} className="fas fa-times" />
                                 </Selection>)
-                    })()
-                }
+                            }
+                        </>    
+                    }
+                } )()
 
+            }
 
-                
             </SelectionControl>
-            
         </CalendarContainer>
     );
 }
 
-Calendar.prototype = {
+Calendar.propTypes = {
     type: PropTypes.string,
-    date: PropTypes.date,
+    date: PropTypes.object,
 };
 
 export default Calendar;
