@@ -6,9 +6,9 @@ import styled, {keyframes} from "styled-components";
 import {InCell, OutCell, SelectedInCell, SelectedOutCell, WeekDayCell, RangeInCell, RangeOutCell} from "./StyledCells";
 import {CalendarContainer, CalendarHeader, CalendarTitle, MoveArrow, DaysContainer, Selection, Divider, SelectionControl, SelectionCloseBtn} from "./StyledCalendarLayouts"
 import { sameMonths, ydmEquals, addMonth, dateFormat, dateRangeFormat, dateBetween } from "./CalendarUtils";
+import {monthNames, weekDayNames, NUMBER_OF_ROWS} from "./Constants";
 
 function Calendar({ date, type }) {
-    const NUMBER_OF_ROWS = 6;
 
     const [pointer, setPointer] = useState(new Date(date.getTime()));
 
@@ -19,23 +19,6 @@ function Calendar({ date, type }) {
         last: undefined
     }]) 
     const [selectedRangesIndex, setSelectedRangesIndex] = useState(0)
-
-    const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ];
-
-    const weekDayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
     const getAllDates = (date) => {
         let mDate = new Date(date.getTime());
